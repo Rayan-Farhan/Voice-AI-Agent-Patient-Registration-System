@@ -90,3 +90,17 @@ def test_date_of_birth_filter_accepts_both_formats(client, valid_patient):
         assert len(found) == 1, query
 
     assert client.get("/patients", params={"date_of_birth": "nonsense"}).status_code == 422
+
+
+def test_root_signposts_the_api_instead_of_404ing(client):
+    """The base URL is what a reviewer is handed; a bare 404 reads as down."""
+    response = client.get("/")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "ok"
+    assert data["endpoints"]["patients"] == "/patients"
+
+
+def test_health_returns_ok(client):
+    assert client.get("/health").json() == {"status": "ok"}

@@ -7,6 +7,7 @@ from app.api.vapi import router as vapi_router
 from app.db import init_db
 from app.errors import register_exception_handlers
 from app.logging_config import configure_logging
+from app.schemas import Envelope
 
 
 @asynccontextmanager
@@ -30,6 +31,26 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
     app.include_router(patients_router)
     app.include_router(vapi_router)
+
+    @app.get("/", tags=["ops"])
+    def index() -> Envelope[dict]:
+        """Signpost for anyone who opens the base URL.
+
+        Without this the root is a bare 404, which reads as a dead service to
+        someone who was handed the base URL rather than a specific endpoint.
+        """
+        return Envelope(
+            data={
+                "service": "Patient Registration API",
+                "status": "ok",
+                "docs": "/docs",
+                "endpoints": {
+                    "patients": "/patients",
+                    "patient_by_id": "/patients/{patient_id}",
+                    "health": "/health",
+                },
+            }
+        )
 
     @app.get("/health", tags=["ops"])
     def health() -> dict[str, str]:

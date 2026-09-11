@@ -60,7 +60,7 @@ app/
   api/               patients.py (REST), vapi.py (agent tools), deps.py
 prompts/
   patient_intake.md  system prompt + tool definitions, annotated
-tests/               40 tests
+tests/               42 tests
 scripts/seed.py      demo records
 ```
 
@@ -125,6 +125,7 @@ All responses use the envelope `{"data": ..., "error": ...}`, including errors.
 | `PUT` | `/patients/{id}` | Partial update; omitted fields untouched |
 | `DELETE` | `/patients/{id}` | Soft-delete — sets `deleted_at`, never removes the row |
 | `GET` | `/health` | Liveness, and the keep-alive cron target |
+| `GET` | `/` | Service signpost listing the available endpoints |
 
 Status codes: 200, 201, 401, 404, 422, 500. Validation failures return 422
 rather than 400, since the request is well-formed but semantically invalid.
@@ -227,7 +228,7 @@ warns about.
 pytest
 ```
 
-40 tests over an in-memory SQLite database: validation rules (phone
+42 tests over an in-memory SQLite database: validation rules (phone
 normalisation, US and ISO date formats, future and implausible dates, text
 length bounds, state and ZIP formats, names with hyphens and apostrophes), all
 five REST endpoints including envelope shape and soft-delete semantics, the
