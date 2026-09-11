@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 
+from app.db import init_db
 from app.logging_config import configure_logging
 
 
 def create_app() -> FastAPI:
     configure_logging()
+    init_db()
 
     app = FastAPI(
         title="Patient Registration API",
