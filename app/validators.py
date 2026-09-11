@@ -6,7 +6,7 @@ rather than return a JSON error body.
 """
 
 import re
-from datetime import date
+from datetime import date, datetime
 
 # Postal abbreviations for the 50 states, DC and the inhabited territories that
 # use the USPS addressing system.
@@ -50,6 +50,37 @@ def validate_name(value: str, field: str) -> str:
         raise ValueError(f"{field} must be between 1 and 50 characters")
     if not NAME_PATTERN.match(value):
         raise ValueError(f"{field} may only contain letters, hyphens and apostrophes")
+    return value
+
+
+def parse_date_of_birth(value: object) -> object:
+    """Accept MM/DD/YYYY as well as ISO dates.
+
+    The brief specifies MM/DD/YYYY, which is also what a US caller says aloud
+    and what an LLM is most likely to emit unprompted. Pydantic only parses ISO
+    by default, so both forms are normalised here before field validation.
+    Anything else is passed through untouched for Pydantic to reject.
+    """
+    if not isinstance(value, str):
+        return value
+
+    value = value.strip()
+    for fmt in ("%m/%d/%Y", "%m-%d-%Y"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return value
+
+
+def validate_text(value: str, field: str, max_length: int) -> str:
+    """Bound a free-text field so an over-long value fails validation rather
+    than the database write, which would surface as a 500 instead of a 422."""
+    value = value.strip()
+    if not value:
+        raise ValueError(f"{field} cannot be empty")
+    if len(value) > max_length:
+        raise ValueError(f"{field} must be {max_length} characters or fewer")
     return value
 
 

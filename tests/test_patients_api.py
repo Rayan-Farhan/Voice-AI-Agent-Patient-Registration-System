@@ -65,3 +65,28 @@ def test_delete_is_soft_and_hides_the_record(client, valid_patient):
     assert client.delete(f"/patients/{created['patient_id']}").status_code == 200
     assert client.get(f"/patients/{created['patient_id']}").status_code == 404
     assert client.get("/patients").json()["data"] == []
+
+
+def test_us_date_format_is_accepted_by_the_api(client, valid_patient):
+    """A reviewer following the brief will send MM/DD/YYYY."""
+    response = client.post("/patients", json={**valid_patient, "date_of_birth": "03/12/1985"})
+
+    assert response.status_code == 201
+    assert response.json()["data"]["date_of_birth"] == "1985-03-12"
+
+
+def test_overlong_city_is_a_422_not_a_database_error(client, valid_patient):
+    response = client.post("/patients", json={**valid_patient, "city": "x" * 101})
+
+    assert response.status_code == 422
+    assert "City" in response.json()["error"]
+
+
+def test_date_of_birth_filter_accepts_both_formats(client, valid_patient):
+    client.post("/patients", json=valid_patient)
+
+    for query in ("1985-03-12", "03/12/1985"):
+        found = client.get("/patients", params={"date_of_birth": query}).json()["data"]
+        assert len(found) == 1, query
+
+    assert client.get("/patients", params={"date_of_birth": "nonsense"}).status_code == 422

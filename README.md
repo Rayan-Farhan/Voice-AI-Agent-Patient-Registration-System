@@ -60,7 +60,7 @@ app/
   api/               patients.py (REST), vapi.py (agent tools), deps.py
 prompts/
   patient_intake.md  system prompt + tool definitions, annotated
-tests/               31 tests
+tests/               40 tests
 scripts/seed.py      demo records
 ```
 
@@ -126,7 +126,12 @@ All responses use the envelope `{"data": ..., "error": ...}`, including errors.
 | `DELETE` | `/patients/{id}` | Soft-delete — sets `deleted_at`, never removes the row |
 | `GET` | `/health` | Liveness, and the keep-alive cron target |
 
-Status codes: 200, 201, 401, 404, 422, 500.
+Status codes: 200, 201, 401, 404, 422, 500. Validation failures return 422
+rather than 400, since the request is well-formed but semantically invalid.
+
+Dates are accepted as either `MM/DD/YYYY` (the format the brief specifies, and
+what a US caller says aloud) or ISO `YYYY-MM-DD`, in both request bodies and the
+`?date_of_birth=` filter. They are always returned as ISO.
 
 ```bash
 curl -X POST "$API/patients" -H 'Content-Type: application/json' -d '{
@@ -222,11 +227,12 @@ warns about.
 pytest
 ```
 
-31 tests over an in-memory SQLite database: validation rules (phone
-normalisation, future dates, state and ZIP formats, names with hyphens and
-apostrophes), all five REST endpoints including envelope shape and soft-delete
-semantics, the agent tool contract using Vapi's documented payload shape, and
-prompt/schema drift.
+40 tests over an in-memory SQLite database: validation rules (phone
+normalisation, US and ISO date formats, future and implausible dates, text
+length bounds, state and ZIP formats, names with hyphens and apostrophes), all
+five REST endpoints including envelope shape and soft-delete semantics, the
+agent tool contract using Vapi's documented payload shape, and prompt/schema
+drift.
 
 Scope is deliberately the critical path rather than exhaustive coverage.
 

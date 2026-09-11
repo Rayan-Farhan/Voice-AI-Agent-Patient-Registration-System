@@ -46,10 +46,26 @@ class PatientBase(BaseModel):
     def _check_last_name(cls, v: str) -> str:
         return validators.validate_name(v, "Last name")
 
+    # mode="before" so MM/DD/YYYY is converted ahead of Pydantic's date parsing.
+    @field_validator("date_of_birth", mode="before")
+    @classmethod
+    def _parse_dob(cls, v: object) -> object:
+        return validators.parse_date_of_birth(v)
+
     @field_validator("date_of_birth")
     @classmethod
     def _check_dob(cls, v: date) -> date:
         return validators.validate_date_of_birth(v)
+
+    @field_validator("city")
+    @classmethod
+    def _check_city(cls, v: str) -> str:
+        return validators.validate_text(v, "City", 100)
+
+    @field_validator("address_line_1")
+    @classmethod
+    def _check_address(cls, v: str) -> str:
+        return validators.validate_text(v, "Address", 200)
 
     @field_validator("phone_number", "emergency_contact_phone")
     @classmethod
@@ -98,10 +114,25 @@ class PatientUpdate(PatientBase):
     def _check_last_name(cls, v: str | None) -> str | None:
         return validators.validate_name(v, "Last name") if v else v
 
+    @field_validator("date_of_birth", mode="before")
+    @classmethod
+    def _parse_dob(cls, v: object) -> object:
+        return validators.parse_date_of_birth(v)
+
     @field_validator("date_of_birth")
     @classmethod
     def _check_dob(cls, v: date | None) -> date | None:
         return validators.validate_date_of_birth(v) if v else v
+
+    @field_validator("city")
+    @classmethod
+    def _check_city(cls, v: str | None) -> str | None:
+        return validators.validate_text(v, "City", 100) if v else v
+
+    @field_validator("address_line_1")
+    @classmethod
+    def _check_address(cls, v: str | None) -> str | None:
+        return validators.validate_text(v, "Address", 200) if v else v
 
     @field_validator("state")
     @classmethod
