@@ -5,9 +5,9 @@ natural conversation, persists them, and exposes them over a REST API.
 
 | | |
 |---|---|
-| **Phone number** | _TBD — add once the Vapi number is provisioned_ |
-| **API base URL** | _TBD — add once deployed_ |
-| **Interactive API docs** | `{API_BASE_URL}/docs` |
+| **Phone number** | **+1 (989) 259-1248** |
+| **API base URL** | https://patient-registration-api-bhh9.onrender.com |
+| **Interactive API docs** | https://patient-registration-api-bhh9.onrender.com/docs |
 
 Call the number, register as a patient, then query `GET /patients` to see the
 record. Call again from the same number and the agent recognises you.
@@ -39,6 +39,11 @@ two entry points to drift apart.
 Everything speech-related is delegated to Vapi. The interesting engineering is
 the prompt, the tool contract, and the data layer — not a hand-rolled STT
 pipeline.
+
+The LLM also runs inside Vapi's pipeline rather than this service, so the model
+is chosen on the assistant and any provider key lives in Vapi. This backend
+holds no model configuration and never calls an LLM itself — it exposes tools
+and validates what comes back.
 
 ### Layout
 
@@ -88,6 +93,9 @@ Tables are created on startup. Optional demo data:
 python -m scripts.seed
 ```
 
+Render's free tier has no shell, so a deployed instance is seeded by POSTing
+the same records to `/patients` instead.
+
 To expose it to Vapi during development:
 
 ```bash
@@ -100,8 +108,6 @@ ngrok http 8000
 |---|---|---|
 | `DATABASE_URL` | no | Defaults to `sqlite:///./patients.db`. Set to a Postgres URL in production. |
 | `VAPI_SHARED_SECRET` | **yes** | Secret the assistant sends on every tool call. Generate with `python -c "import secrets; print(secrets.token_urlsafe(32))"`. |
-| `LLM_PROVIDER` | no | `vapi` (default), `gemini` or `groq`. |
-| `GEMINI_API_KEY` / `GROQ_API_KEY` | no | Only if running the assistant on your own model. |
 
 No secret is committed. `.env` is gitignored; production values live in the host's dashboard.
 
@@ -218,8 +224,8 @@ Scope is deliberately the critical path rather than exhaustive coverage.
 
 Render (`render.yaml`) with Neon Postgres.
 
-1. Create a Neon project and copy the connection string.
-2. Create a Render web service from this repo; set `DATABASE_URL` and `VAPI_SHARED_SECRET`.
+1. Create a Neon project and copy the connection string. Use the pooled string, keep `?sslmode=require`, and note SQLAlchemy needs the `postgresql://` scheme rather than `postgres://`.
+2. Create a Render web service from this repo (the blueprint above); set `DATABASE_URL` and `VAPI_SHARED_SECRET`.
 3. Point the Vapi assistant's tool server URL at `https://<service>/vapi/tools`, with header `x-vapi-secret`.
 4. Add a cron (cron-job.org or UptimeRobot) hitting `/health` every 10 minutes.
 
