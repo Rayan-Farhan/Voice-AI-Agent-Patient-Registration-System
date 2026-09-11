@@ -27,3 +27,15 @@ def get_db() -> Iterator[Session]:
         yield db
     finally:
         db.close()
+
+
+def init_db() -> None:
+    """Create tables if absent.
+
+    Deliberately no migration tool: the schema is defined once and never
+    evolves within the scope of this project, so Alembic would be ceremony
+    without payoff. A longer-lived service would want migrations here.
+    """
+    from app import models  # noqa: F401  - registers mappers before create_all
+
+    Base.metadata.create_all(engine)
