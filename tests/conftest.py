@@ -1,8 +1,10 @@
 import os
 
-# Point the app at an in-memory database before any app module is imported:
-# app.db builds its engine from this at import time.
+# Pin configuration before any app module is imported: app.db builds its
+# engine at import time, and settings are cached. Setting both here keeps the
+# suite independent of whatever .env a developer has locally.
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ["VAPI_SHARED_SECRET"] = "test-secret"
 
 import pytest
 from fastapi.testclient import TestClient

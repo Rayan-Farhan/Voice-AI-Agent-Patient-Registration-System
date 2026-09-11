@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.patients import router as patients_router
+from app.api.vapi import router as vapi_router
 from app.db import init_db
 from app.errors import register_exception_handlers
 from app.logging_config import configure_logging
@@ -28,6 +29,7 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
     app.include_router(patients_router)
+    app.include_router(vapi_router)
 
     @app.get("/health", tags=["ops"])
     def health() -> dict[str, str]:
