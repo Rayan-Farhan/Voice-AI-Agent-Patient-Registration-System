@@ -9,11 +9,19 @@ settings = get_settings()
 
 # SQLite refuses cross-thread connection sharing by default, which breaks
 # FastAPI's threadpool. Postgres needs no such accommodation.
-connect_args = (
-    {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
-)
+is_sqlite = settings.database_url.startswith("sqlite")
 
-engine = create_engine(settings.database_url, connect_args=connect_args)
+connect_args = {"check_same_thread": False} if is_sqlite else {}
+
+engine = create_engine(
+    settings.database_url,
+    connect_args=connect_args,
+    # Managed Postgres that scales to zero drops idle connections, so a pooled
+    # connection can be dead by the time the next request arrives. Pre-ping
+    # costs a round trip and turns that into a transparent reconnect instead of
+    # an error in the middle of a phone call. Meaningless for SQLite.
+    pool_pre_ping=not is_sqlite,
+)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 
