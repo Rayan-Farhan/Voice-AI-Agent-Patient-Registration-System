@@ -14,10 +14,6 @@ class Settings(BaseSettings):
 
     vapi_shared_secret: str = "change-me"
 
-    llm_provider: str = "vapi"
-    gemini_api_key: str | None = None
-    groq_api_key: str | None = None
-
 
 @lru_cache
 def get_settings() -> Settings:
